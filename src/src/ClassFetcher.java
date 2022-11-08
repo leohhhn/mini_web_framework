@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class AccessingAllClassesInPackage {
+public class ClassFetcher {
 
     public Set<Class> findAllClassesUsingClassLoader(String packageName) {
         InputStream stream = ClassLoader.getSystemClassLoader()

@@ -1,19 +1,22 @@
 package src;
 
+import src.annotations.*;
+import src.interfaces.Establishment;
+
 @Controller
-public class TestController {
+public class TController {
 
-    @Autowired(verbose = false)
-    String testField;
+    @Autowired(verbose = true)
+    @Qualifier(value = "TZoo")
+    Establishment establishment1;
 
-    public TestController() {
+    public TController() {
     }
 
     @GET
     @Path(path = "/path1")
     public String path1() {
         return "Stigli ste do /path1!";
-
     }
 
     @POST

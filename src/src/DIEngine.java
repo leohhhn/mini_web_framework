@@ -1,17 +1,24 @@
 package src;
 
+import src.annotations.*;
+
 import java.lang.reflect.*;
+import java.time.LocalDateTime;
 import java.util.*;
 
 public class DIEngine {
     Map<String, Map<Class, Method>> routes = new HashMap<String, Map<Class, Method>>();
     Map<Class, Object> controllers = new HashMap<Class, Object>();
+    Map<Class, Class> depContainer = new HashMap<Class, Class>(); // <interface, implClass>
+
+    Map<Class, Object> depInstances = new HashMap<Class, Object>();
+
 
     public DIEngine() {
     }
 
     public void start() {
-        AccessingAllClassesInPackage classFinder = new AccessingAllClassesInPackage();
+        ClassFetcher classFinder = new ClassFetcher();
         Set<Class> allClasses = classFinder.findAllClassesUsingClassLoader("src");
 
         try {
@@ -21,10 +28,14 @@ public class DIEngine {
                 if (!c.isAnnotationPresent(Controller.class)) continue;
                 Object ctrlInstance = c.getDeclaredConstructor().newInstance();
 
-                if (controllers.get(c) == null) // put instance in mapping if not instantiated already
+                // instantiate controllers
+                if (controllers.get(c) == null) {
                     controllers.put(c, ctrlInstance);
+                    // inject dependencies
+                    depInjection(c);
+                }
 
-                // Method fetcher
+                // GET/POST Path Method fetcher
                 for (Method m : c.getDeclaredMethods()) {
                     Map<Class, Method> t = new HashMap<Class, Method>();
                     t.put(c, m);
@@ -39,17 +50,42 @@ public class DIEngine {
                         routes.put(packed, t);
                     }
                 }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-                ArrayList<Field> awFields = new ArrayList<Field>();
-                for (Field f : c.getDeclaredFields()) {
-                    if (f.isAnnotationPresent(Autowired.class)) {
-                        awFields.add(f);
+    public void depInjection(Class c) {
+        try {
+            for (Field f : c.getDeclaredFields()) {
+                if (f.isAnnotationPresent(Autowired.class) && f.isAnnotationPresent(Qualifier.class)) {
+                    f.setAccessible(true);
 
+                    String qualifierValue = f.getAnnotation(Qualifier.class).value();
+                    boolean verbose = f.getAnnotation(Autowired.class).verbose();
 
+                    Class currInterface = Class.forName(f.getType().getName());
+                    // implementation of @autowired field fetched from @qualifier
+                    Class currIntImpl = Class.forName("src.".concat(qualifierValue));
+
+                    depInjection(currIntImpl); // recursively fetch other deps
+
+                    // instantiate fields
+                    Object fieldInstance = currIntImpl.getDeclaredConstructor().newInstance();
+
+                    f.set(c, fieldInstance);
+
+                    if (verbose) {
+                        System.out.println("Initialized" + f.getType() + " " + f.getName() +
+                                " in " + c.getName() + " on " +
+                                LocalDateTime.now() + " with " + fieldInstance.hashCode());
                     }
 
-                }§§
+                    depContainer.put(currInterface, currIntImpl); // fill in Dependency Container
+                }
             }
+            return;
         } catch (Exception e) {
             e.printStackTrace();
         }
