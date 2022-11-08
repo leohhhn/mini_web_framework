@@ -73,7 +73,11 @@ public class DIEngine {
 
                     // instantiate fields
                     Object fieldInstance = currIntImpl.getDeclaredConstructor().newInstance();
+                    System.out.println(fieldInstance.getClass()); // prints correct class
 
+                    // todo following line throws illegal arg exception
+                    //  "Can not set src.interfaces.Animal field src.TZoo.cat to java.lang.Class"
+                    //  cannot figure it out :/
                     f.set(c, fieldInstance);
 
                     if (verbose) {
