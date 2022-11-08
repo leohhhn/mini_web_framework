@@ -1,19 +1,15 @@
 package src;
 
 @Controller
-public class TestController {
+public class TestController2 {
 
-    @Autowired(verbose = false)
-    String testField;
-
-    public TestController() {
+    public TestController2() {
     }
 
     @GET
     @Path(path = "/path1")
     public String path1() {
         return "Stigli ste do /path1!";
-
     }
 
     @POST
