@@ -10,9 +10,7 @@ public class DIEngine {
     Map<String, Map<Class, Method>> routes = new HashMap<String, Map<Class, Method>>();
     Map<Class, Object> controllers = new HashMap<Class, Object>();
     Map<Class, Class> depContainer = new HashMap<Class, Class>(); // <interface, implClass>
-
     Map<Class, Object> depInstances = new HashMap<Class, Object>();
-
 
     public DIEngine() {
     }
@@ -32,7 +30,7 @@ public class DIEngine {
                 if (controllers.get(c) == null) {
                     controllers.put(c, ctrlInstance);
                     // inject dependencies
-                    depInjection(c);
+                    depInjection(c, ctrlInstance);
                 }
 
                 // GET/POST Path Method fetcher
@@ -56,7 +54,7 @@ public class DIEngine {
         }
     }
 
-    public void depInjection(Class c) {
+    public void depInjection(Class c, Object classInstance) {
         try {
             for (Field f : c.getDeclaredFields()) {
                 if (f.isAnnotationPresent(Autowired.class) && f.isAnnotationPresent(Qualifier.class)) {
@@ -69,21 +67,17 @@ public class DIEngine {
                     // implementation of @autowired field fetched from @qualifier
                     Class currIntImpl = Class.forName("src.".concat(qualifierValue));
 
-                    depInjection(currIntImpl); // recursively fetch other deps
-
                     // instantiate fields
                     Object fieldInstance = currIntImpl.getDeclaredConstructor().newInstance();
-                    System.out.println(fieldInstance.getClass()); // prints correct class
 
-                    // todo following line throws illegal arg exception
-                    //  "Can not set src.interfaces.Animal field src.TZoo.cat to java.lang.Class"
-                    //  cannot figure it out :/
-                    f.set(c, fieldInstance);
+                    depInjection(currIntImpl, fieldInstance); // recursively fetch other deps
+
+                    f.set(classInstance, fieldInstance);
 
                     if (verbose) {
-                        System.out.println("Initialized" + f.getType() + " " + f.getName() +
+                        System.out.println("Initialized " + f.getType() + " " + f.getName() +
                                 " in " + c.getName() + " on " +
-                                LocalDateTime.now() + " with " + fieldInstance.hashCode());
+                                LocalDateTime.now() + " with hash" + fieldInstance.hashCode());
                     }
 
                     depContainer.put(currInterface, currIntImpl); // fill in Dependency Container

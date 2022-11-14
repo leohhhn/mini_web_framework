@@ -7,7 +7,7 @@ import src.interfaces.Establishment;
 
 class TZoo implements Establishment {
 
-    @Autowired(verbose = false)
+    @Autowired(verbose = true)
     @Qualifier(value = "TCat")
     Animal cat;
 
